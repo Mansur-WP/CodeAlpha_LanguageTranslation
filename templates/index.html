@@ -3,46 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="CodeAlpha Language Translation Tool - Translate between 25+ global languages instantly using Python and Flask.">
+    <meta name="description" content="CodeAlpha Language Translation Tool - High-precision real-time translation powered by Python, Flask & official DeepL API.">
     <title>Polyglot | CodeAlpha Language Translation Tool</title>
-    <!-- Modern Font: Inter & Outfit -->
+    <!-- Modern Font Family: Outfit & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <!-- Ambient Background Light Blobs -->
     <div class="app-background-glow glow-1"></div>
     <div class="app-background-glow glow-2"></div>
+    <div class="app-background-glow glow-3"></div>
 
     <div class="app-wrapper">
-        <!-- Header -->
+        <!-- Top Navigation Header -->
         <header class="app-header">
             <div class="header-branding">
                 <div class="logo-badge">
-                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="2" y1="12" x2="22" y2="12"></line>
                         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
                     </svg>
-                    <span>CodeAlpha AI Internship</span>
+                    <span>CodeAlpha AI Internship Project</span>
                 </div>
                 <h1 class="header-title">Polyglot <span class="gradient-text">Translator</span></h1>
-                <p class="header-subtitle">Real-time multilingual translation powered by Python, Flask &amp; deep-translator</p>
+                <p class="header-subtitle">Real-time neural translation powered by Python, Flask &amp; official DeepL SDK</p>
             </div>
             
             <div class="header-meta">
-                <span class="status-indicator">
-                    <span class="status-dot"></span>
-                    <span id="provider-badge">Provider: Google (Active)</span>
-                </span>
+                <div class="status-indicator">
+                    <span class="status-dot pulsing"></span>
+                    <span id="provider-badge">Provider: {{ provider|upper if provider == 'deepl' else provider|capitalize }} (Active)</span>
+                </div>
             </div>
         </header>
 
         <!-- Main Translation Container -->
         <main class="translation-container">
-            <!-- Alert / Toast Container -->
+            <!-- Alert / Toast Banner -->
             <div id="alert-banner" class="alert-banner hidden" role="alert">
                 <div class="alert-icon-wrapper">
                     <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -55,10 +57,10 @@
                 <button id="alert-close-btn" class="alert-close-btn" aria-label="Close notification">&times;</button>
             </div>
 
-            <!-- Translation Toolbar (Language Selectors & Swap) -->
+            <!-- Translation Toolbar (Clean Language Selectors & Swap) -->
             <div class="translation-toolbar">
                 <div class="language-selector-group">
-                    <label for="source-lang-select" class="selector-label">From:</label>
+                    <label for="source-lang-select" class="selector-label">FROM:</label>
                     <div class="select-wrapper">
                         <select id="source-lang-select" class="lang-select" aria-label="Source Language">
                             {% for code, name in languages.items() %}
@@ -67,21 +69,24 @@
                                 </option>
                             {% endfor %}
                         </select>
+                        <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
                 </div>
 
                 <!-- Swap Languages Button -->
-                <button id="swap-lang-btn" class="icon-btn swap-btn" title="Swap languages (Ctrl+S)" aria-label="Swap languages">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="16 3 21 8 16 13"></polyline>
-                        <line x1="21" y1="8" x2="9" y2="8"></line>
-                        <polyline points="8 21 3 16 8 11"></polyline>
-                        <line x1="3" y1="16" x2="15" y2="16"></line>
-                    </svg>
-                </button>
+                <div class="swap-btn-container">
+                    <button id="swap-lang-btn" class="icon-btn swap-btn" title="Swap languages (Ctrl+S)" aria-label="Swap languages">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3L21 7L17 11"></path>
+                            <path d="M3 7H21"></path>
+                            <path d="M7 21L3 17L7 13"></path>
+                            <path d="M21 17H3"></path>
+                        </svg>
+                    </button>
+                </div>
 
                 <div class="language-selector-group">
-                    <label for="target-lang-select" class="selector-label">To:</label>
+                    <label for="target-lang-select" class="selector-label">TO:</label>
                     <div class="select-wrapper">
                         <select id="target-lang-select" class="lang-select" aria-label="Target Language">
                             {% for code, name in languages.items() %}
@@ -92,6 +97,7 @@
                                 {% endif %}
                             {% endfor %}
                         </select>
+                        <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
                 </div>
             </div>
@@ -101,7 +107,10 @@
                 <!-- Source Input Panel -->
                 <section class="translation-panel input-panel">
                     <div class="panel-header">
-                        <span class="panel-tag">Source Text</span>
+                        <div class="panel-title-wrapper">
+                            <span class="panel-badge">Input</span>
+                            <span class="panel-tag">Source Text</span>
+                        </div>
                         <div class="panel-actions">
                             <button id="paste-input-btn" class="panel-action-btn" title="Paste from clipboard">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -124,20 +133,33 @@
                         <textarea
                             id="source-text"
                             class="translation-textarea"
-                            placeholder="Type or paste text here to translate... (e.g., 'Hello! Welcome to the CodeAlpha internship.')"
+                            placeholder="Type or paste text here to translate... (e.g., 'Hello! Welcome to the CodeAlpha AI internship.')"
                             maxlength="{{ max_chars }}"
                             spellcheck="false"
                             autofocus
                         ></textarea>
                     </div>
 
+                    <!-- Sample Prompt Shortcuts -->
+                    <div class="sample-prompts-bar">
+                        <span class="sample-label">Quick Try:</span>
+                        <button type="button" class="sample-chip" data-sample="Hello! Welcome to the CodeAlpha AI Internship program.">"Hello! Welcome to CodeAlpha"</button>
+                        <button type="button" class="sample-chip" data-sample="Artificial intelligence and machine learning are transforming modern software development.">"AI is transforming software"</button>
+                    </div>
+
                     <div class="panel-footer">
-                        <span class="char-counter">
-                            <span id="char-count">0</span> / {{ max_chars }}
-                        </span>
+                        <div class="char-counter-wrapper">
+                            <span class="char-counter">
+                                <span id="char-count">0</span> / {{ max_chars }}
+                            </span>
+                            <div class="char-meter-bg">
+                                <div id="char-meter-fill" class="char-meter-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        
                         <div class="panel-footer-actions">
-                            <span class="shortcut-hint">Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
-                            <button id="translate-btn" class="btn btn-primary" id="btn-translate">
+                            <span class="shortcut-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span>
+                            <button id="translate-btn" class="btn btn-primary">
                                 <span class="btn-text">Translate</span>
                                 <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -152,7 +174,10 @@
                 <!-- Target Output Panel -->
                 <section class="translation-panel output-panel">
                     <div class="panel-header">
-                        <span class="panel-tag">Translated Output</span>
+                        <div class="panel-title-wrapper">
+                            <span class="panel-badge badge-accent">Output</span>
+                            <span class="panel-tag">Translated Text</span>
+                        </div>
                         <div class="panel-actions">
                             <button id="speak-output-btn" class="panel-action-btn" title="Listen to pronunciation" disabled>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -181,15 +206,17 @@
                         
                         <!-- Empty State Illustration Placeholder -->
                         <div id="output-placeholder" class="output-placeholder-state">
-                            <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="m5 8 6 6"></path>
-                                <path d="m4 14 6-6 2-3"></path>
-                                <path d="M2 5h12"></path>
-                                <path d="M7 2h1"></path>
-                                <path d="m22 22-5-10-5 10"></path>
-                                <path d="M14 18h6"></path>
-                            </svg>
-                            <p>Translations will appear here instantly</p>
+                            <div class="placeholder-icon-glow">
+                                <svg class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                                    <path d="m5 8 6 6"></path>
+                                    <path d="m4 14 6-6 2-3"></path>
+                                    <path d="M2 5h12"></path>
+                                    <path d="M7 2h1"></path>
+                                    <path d="m22 22-5-10-5 10"></path>
+                                    <path d="M14 18h6"></path>
+                                </svg>
+                            </div>
+                            <p>Translations appear here instantly as you type</p>
                         </div>
                     </div>
 
@@ -205,24 +232,30 @@
             <!-- Features Information Strip -->
             <div class="features-strip">
                 <div class="feature-card">
-                    <span class="feature-icon">&#9889;</span>
+                    <div class="feature-icon-wrapper icon-lightning">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    </div>
                     <div>
-                        <h4>Real-Time AI API</h4>
-                        <p>Powered by deep-translator and live provider requests.</p>
+                        <h4>Official DeepL SDK</h4>
+                        <p>Powered by the official DeepL Python SDK for neural-grade accuracy.</p>
                     </div>
                 </div>
                 <div class="feature-card">
-                    <span class="feature-icon">&#128274;</span>
+                    <div class="feature-icon-wrapper icon-lock">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
                     <div>
-                        <h4>Zero API Credentials In Frontend</h4>
-                        <p>Backend proxy architecture keeps credentials 100% confidential.</p>
+                        <h4>Zero Frontend Credentials</h4>
+                        <p>Backend Flask proxy architecture keeps API keys 100% secure.</p>
                     </div>
                 </div>
                 <div class="feature-card">
-                    <span class="feature-icon">&#127760;</span>
+                    <div class="feature-icon-wrapper icon-globe">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                    </div>
                     <div>
-                        <h4>25+ Global &amp; African Languages</h4>
-                        <p>Supports English, Spanish, French, Yoruba, Hausa, Igbo, etc.</p>
+                        <h4>30+ Global Languages</h4>
+                        <p>High-accuracy translation across English, Spanish, French, German, etc.</p>
                     </div>
                 </div>
             </div>
@@ -234,7 +267,7 @@
         <!-- Footer -->
         <footer class="app-footer">
             <p>CodeAlpha Internship &bull; Project 1: Language Translation Tool &bull; Developed by Python Pair Programmer</p>
-            <p class="footer-sub">Built with Flask &bull; Python 3.12 &bull; deep-translator &bull; Modern Glassmorphism UI</p>
+            <p class="footer-sub">Built with Flask &bull; Python 3.12 &bull; Official DeepL API &bull; Glassmorphism UI</p>
         </footer>
     </div>
 

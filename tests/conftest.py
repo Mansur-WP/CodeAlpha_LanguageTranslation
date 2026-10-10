@@ -12,7 +12,8 @@ class TestConfig(Config):
     TESTING = True
     FLASK_ENV = "testing"
     DEBUG = False
-    TRANSLATION_PROVIDER = "google"
+    TRANSLATION_PROVIDER = "deepl"
+    DEEPL_AUTH_KEY = "mock-test-auth-key:fx"
     MAX_CHAR_LIMIT = 500
 
 @pytest.fixture

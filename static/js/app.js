@@ -1,5 +1,6 @@
 /**
- * CodeAlpha Language Translation Tool - Frontend Application Script
+ * CodeAlpha Language Translation Tool - Modern Frontend Application Script
+ * Features: DeepL integration, Clean Select Dropdowns, Live Debounced Translate, Sample Chips, Speech TTS
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,25 +18,75 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyBtnText = document.getElementById('copy-btn-text');
     const speakOutputBtn = document.getElementById('speak-output-btn');
     const charCount = document.getElementById('char-count');
+    const charMeterFill = document.getElementById('char-meter-fill');
     const outputMetaText = document.getElementById('output-meta-text');
     const outputPlaceholder = document.getElementById('output-placeholder');
     const alertBanner = document.getElementById('alert-banner');
     const alertMessage = document.getElementById('alert-message');
     const alertCloseBtn = document.getElementById('alert-close-btn');
     const toastContainer = document.getElementById('toast-container');
+    const sampleChips = document.querySelectorAll('.sample-chip');
 
-    // Live Character Counter
+    let autoTranslateTimer = null;
+
+    // Live Character Counter & Meter Fill
     function updateCharCount() {
         const length = sourceText.value.length;
+        const maxLimit = parseInt(sourceText.getAttribute('maxlength') || '5000', 10);
         charCount.textContent = length.toLocaleString();
+
+        if (charMeterFill) {
+            const pct = Math.min(100, Math.round((length / maxLimit) * 100));
+            charMeterFill.style.width = `${pct}%`;
+            if (pct > 85) {
+                charMeterFill.style.background = '#f43f5e';
+            } else {
+                charMeterFill.style.background = 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)';
+            }
+        }
     }
 
-    sourceText.addEventListener('input', updateCharCount);
+    sourceText.addEventListener('input', () => {
+        updateCharCount();
+        
+        // Debounced Auto-Translate (600ms typing delay)
+        clearTimeout(autoTranslateTimer);
+        const val = sourceText.value.trim();
+        if (val.length >= 3) {
+            autoTranslateTimer = setTimeout(() => {
+                handleTranslate(true); // silent auto-translate
+            }, 600);
+        } else if (val.length === 0) {
+            targetText.value = '';
+            if (outputPlaceholder) outputPlaceholder.classList.remove('hidden');
+            copyOutputBtn.disabled = true;
+            speakOutputBtn.disabled = true;
+            outputMetaText.textContent = 'Ready';
+        }
+    });
+
+    // Language Select Change Listeners
+    sourceLangSelect.addEventListener('change', () => {
+        if (sourceText.value.trim().length > 0) {
+            handleTranslate();
+        }
+    });
+
+    targetLangSelect.addEventListener('change', () => {
+        if (sourceText.value.trim().length > 0) {
+            handleTranslate();
+        }
+    });
 
     // Clear Input
     clearInputBtn.addEventListener('click', () => {
         sourceText.value = '';
+        targetText.value = '';
         updateCharCount();
+        if (outputPlaceholder) outputPlaceholder.classList.remove('hidden');
+        copyOutputBtn.disabled = true;
+        speakOutputBtn.disabled = true;
+        outputMetaText.textContent = 'Ready';
         sourceText.focus();
         showToast('Input cleared');
     });
@@ -49,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     sourceText.value = text;
                     updateCharCount();
                     showToast('Pasted from clipboard');
+                    handleTranslate();
                 } else {
                     showToast('Clipboard is empty', 'error');
                 }
@@ -59,6 +111,18 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('Clipboard read error:', err);
             showToast('Unable to access clipboard. Please paste manually.', 'error');
         }
+    });
+
+    // Sample Prompt Chips
+    sampleChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            const sample = chip.getAttribute('data-sample');
+            if (sample) {
+                sourceText.value = sample;
+                updateCharCount();
+                handleTranslate();
+            }
+        });
     });
 
     // Swap Languages
@@ -84,10 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         showToast(`Swapped to ${targetLangSelect.options[targetLangSelect.selectedIndex].text}`);
+        if (sourceText.value.trim().length > 0) {
+            handleTranslate();
+        }
     });
 
-    // Translate Action
-    async function handleTranslate() {
+    // Main Translate Action
+    async function handleTranslate(isSilent = false) {
         const text = sourceText.value.trim();
         const sourceLang = sourceLangSelect.value;
         const targetLang = targetLangSelect.value;
@@ -95,8 +162,10 @@ document.addEventListener('DOMContentLoaded', () => {
         hideAlert();
 
         if (!text) {
-            showAlert('Please enter some text to translate.');
-            sourceText.focus();
+            if (!isSilent) {
+                showAlert('Please enter some text to translate.');
+                sourceText.focus();
+            }
             return;
         }
 
@@ -133,23 +202,26 @@ document.addEventListener('DOMContentLoaded', () => {
             copyOutputBtn.disabled = false;
             speakOutputBtn.disabled = false;
 
-            outputMetaText.textContent = `Completed in ${elapsed}s (${data.character_count} chars)`;
-            showToast('Translation successful!', 'success');
+            const detectedNote = (sourceLang === 'auto' && data.source_lang) ? ` (Detected: ${data.source_lang.toUpperCase()})` : '';
+            outputMetaText.textContent = `Completed in ${elapsed}s (${data.character_count} chars)${detectedNote}`;
+            
+            if (!isSilent) {
+                showToast('Translation successful!', 'success');
+            }
 
         } catch (err) {
             console.error('Fetch translation error:', err);
-            showAlert('Network error: Unable to reach the backend server. Make sure the Flask app is running.');
+            showAlert('Network error: Unable to reach backend server. Make sure Flask app is running.');
             outputMetaText.textContent = 'Connection error';
         } finally {
             setLoading(false);
         }
     }
 
-    translateBtn.addEventListener('click', handleTranslate);
+    translateBtn.addEventListener('click', () => handleTranslate());
 
     // Keyboard Shortcuts
     document.addEventListener('keydown', (e) => {
-        // Ctrl+Enter or Cmd+Enter to Translate
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
             handleTranslate();
@@ -165,7 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(textToCopy);
             } else {
-                // Fallback for older browsers
                 targetText.select();
                 document.execCommand('copy');
             }
@@ -191,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        window.speechSynthesis.cancel(); // Stop any currently playing audio
+        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
         utterance.lang = targetLangSelect.value;
         utterance.rate = 1.0;
@@ -200,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.speechSynthesis.speak(utterance);
     });
 
-    // Alert Banner Helper
+    // Alert Banner Helpers
     function showAlert(msg) {
         alertMessage.textContent = msg;
         alertBanner.classList.remove('hidden');
@@ -234,14 +305,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isLoading) {
             translateSpinner.classList.remove('hidden');
             translateBtn.querySelector('.btn-text').textContent = 'Translating...';
-            translateBtn.querySelector('.btn-icon').style.display = 'none';
+            if (translateBtn.querySelector('.btn-icon')) {
+                translateBtn.querySelector('.btn-icon').style.display = 'none';
+            }
         } else {
             translateSpinner.classList.add('hidden');
             translateBtn.querySelector('.btn-text').textContent = 'Translate';
-            translateBtn.querySelector('.btn-icon').style.display = 'inline-block';
+            if (translateBtn.querySelector('.btn-icon')) {
+                translateBtn.querySelector('.btn-icon').style.display = 'inline-block';
+            }
         }
     }
 
-    // Initialize character counter
+    // Initial setup
     updateCharCount();
 });

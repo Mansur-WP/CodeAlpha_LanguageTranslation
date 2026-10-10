@@ -21,7 +21,8 @@ def create_app(config_class=Config):
 
     # Initialize translation service
     translator_service = TranslatorService(
-        provider=app.config.get("TRANSLATION_PROVIDER", "google"),
+        provider=app.config.get("TRANSLATION_PROVIDER", "deepl"),
+        auth_key=app.config.get("DEEPL_AUTH_KEY"),
         max_chars=app.config.get("MAX_CHAR_LIMIT", 5000)
     )
 
